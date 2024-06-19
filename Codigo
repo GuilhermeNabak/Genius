@@ -1,0 +1,127 @@
+#define NOTA_RE4  294
+#define NOTA_SOL4  392
+#define NOTA_LA4  440
+#define NOTA_LA5  880
+
+int padrao[100] = {};
+int rodadaAtual = 0;
+int passoAtual = 0;
+int pinoSom = 12;
+int pinosLEDs[4] = { 2, 3, 4, 5 };
+int pinosBotoes[4] = { 6, 7, 8, 9 };
+int botaoPressionado = 0;
+int jogoPerdido = false;
+int notas[4] = { NOTA_LA5, NOTA_LA4, NOTA_SOL4, NOTA_RE4 };
+
+void setup() {
+  for (int i = 0; i <= 3; i++) {
+    pinMode(pinosLEDs[i], OUTPUT);
+  }
+
+  for (int i = 0; i <= 3; i++) {
+    pinMode(pinosBotoes[i], INPUT_PULLUP);
+  }
+  pinMode(pinoSom, OUTPUT);
+  randomSeed(analogRead(0));
+}
+
+void loop() {
+  if (jogoPerdido) {
+    int padrao[100] = {};
+    rodadaAtual = 0;
+    passoAtual = 0;
+    jogoPerdido = false;
+  }
+
+  if (rodadaAtual == 0) {
+    tocarSomInicial();
+    delay(500);
+  }
+  iniciarProximaRodada();
+  
+  tocarPadrao();
+  
+  esperarJogador();
+  
+  delay(1000);
+}
+
+void iniciarProximaRodada() {
+  int numeroAleatorio = random(0, 4);
+  padrao[rodadaAtual++] = numeroAleatorio;
+}
+
+void tocarPadrao() {
+  for (int i = 0; i < rodadaAtual; i++) {
+    tone(pinoSom, notas[padrao[i]]);
+    digitalWrite(pinosLEDs[padrao[i]], HIGH);
+    delay(500);
+    noTone(pinoSom);
+    digitalWrite(pinosLEDs[padrao[i]], LOW);
+    delay(100);
+  }
+  noTone(pinoSom);
+}
+
+void esperarJogador() {
+  for (int i = 0; i < rodadaAtual; i++) {
+    esperarJogada();
+
+    if (padrao[passoAtual] != botaoPressionado) {
+      fimDeJogo(); 
+    }
+    if (jogoPerdido) {
+      break;
+    }
+    passoAtual++;
+  }
+
+  passoAtual = 0;
+}
+
+void esperarJogada() {
+  boolean jogadaFeita = false;
+  while (!jogadaFeita) {
+    for (int i = 0; i <= 3; i++) {
+      if (!digitalRead(pinosBotoes[i])) {
+        botaoPressionado = i;
+        tone(pinoSom, notas[i]);
+        digitalWrite(pinosLEDs[i], HIGH);
+        delay(300);
+        digitalWrite(pinosLEDs[i], LOW);
+        noTone(pinoSom);
+
+        jogadaFeita = true;
+      }
+    }
+    delay(10);
+  }
+}
+
+void fimDeJogo() {
+  for (int i = 0; i <= 3; i++) {
+    tone(pinoSom, notas[i]);
+    digitalWrite(pinosLEDs[i], HIGH);
+    delay(200);
+    digitalWrite(pinosLEDs[i], LOW);
+    noTone(pinoSom);
+  }
+  noTone(pinoSom);
+
+  jogoPerdido = true;  
+}
+
+void tocarSomInicial() {
+  tone(pinoSom, notas[0]);
+  digitalWrite(pinosLEDs[0], HIGH);
+  digitalWrite(pinosLEDs[1], HIGH);
+  digitalWrite(pinosLEDs[2], HIGH);
+  digitalWrite(pinosLEDs[3], HIGH);
+  delay(500);
+  digitalWrite(pinosLEDs[0], LOW);
+  digitalWrite(pinosLEDs[1], LOW);
+  digitalWrite(pinosLEDs[2], LOW);
+  digitalWrite(pinosLEDs[3], LOW);
+  delay(500);
+  noTone(pinoSom);
+}
